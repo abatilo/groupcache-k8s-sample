@@ -25,5 +25,4 @@ P.S. Hi Tim's co-workers! :wave: Hi Ryan. I'm a Casey Muratori fan too :D
 
 ## Video demo
 
-![svg of setup and testing](./demo.svg)
-<img src="./demo.svg" width='400' />
+Click [here](./demo.svg) to watch a demo svg
