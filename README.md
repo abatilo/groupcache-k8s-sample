@@ -1,8 +1,9 @@
 # groupcache-k8s-sample
 
-`mailgun/groupcache` is a loading cache that was inspired by the
-`golang/groupcache` but with some additional capabilities like
-`context.Context` support.
+[mailgun/groupcache](https://github.com/mailgun/groupcache) is a loading cache
+that was inspired by the
+[golang/groupcache](https://github.com/golang/groupcache) but with some
+additional capabilities like `context.Context` support.
 
 `groupcache` has the ability to register a list of peers and will hash request
 keys and fetch the value from a peer. This way, you have an in-memory cache
@@ -21,3 +22,8 @@ requests and the response bodies will include cache hit statistics and which
 peer the loading cache sourced the value from.
 
 P.S. Hi Tim's co-workers! :wave: Hi Ryan. I'm a Casey Muratori fan too :D
+
+## Video demo
+
+![svg of setup and testing](./demo.svg)
+<img src="./demo.svg" width='400' />
