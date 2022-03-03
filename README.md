@@ -25,4 +25,6 @@ P.S. Hi Tim's co-workers! :wave: Hi Ryan. I'm a Casey Muratori fan too :D
 
 ## Video demo
 
-Click [here](./demo.svg) to watch a demo svg
+Click
+[here](https://raw.githubusercontent.com/abatilo/groupcache-k8s-sample/master/demo.svg)
+to watch a demo svg.
