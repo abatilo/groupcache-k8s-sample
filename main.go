@@ -18,6 +18,12 @@ func main() {
 	go func() {
 		// Infinite loop every few seconds. In reality, should use k8s watch API
 		// to get notified of when `v1.Endpoints` changes
+
+		// Sample subscription to endpoints:
+		// https://github.com/mailgun/gubernator/blob/1e6849ab820232acfd31440a33580496fb3d3f45/kubernetes.go
+
+		// With k8s rbac to hit the control plane:
+		// https://github.com/mailgun/gubernator/blob/1e6849ab820232acfd31440a33580496fb3d3f45/deploy/helm/templates/rbac.yaml
 		for {
 			// For now, just query the headless dns record over and over again
 			time.Sleep(500 * time.Millisecond)
