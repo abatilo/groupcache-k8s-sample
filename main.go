@@ -9,34 +9,51 @@ import (
 	"time"
 
 	"github.com/mailgun/groupcache"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 )
+
+func getPeerIPs(cname string) []string {
+	addr, _ := net.LookupIP(cname)
+	peers := make([]string, len(addr))
+	for _, a := range addr {
+		peers = append(peers, fmt.Sprintf("http://%s:8000", a.String()))
+	}
+	log.Printf("Peers: %v", peers)
+	return peers
+}
 
 func main() {
 	// NewHTTPPool registers /_groupcache/ with http.DefaultServeMux.
 	pool := groupcache.NewHTTPPool(fmt.Sprintf("http://%s:8000", os.Getenv("MY_POD_IP")))
 
-	go func() {
-		// Infinite loop every few seconds. In reality, should use k8s watch API
-		// to get notified of when `v1.Endpoints` changes
+	cfg, _ := rest.InClusterConfig()
+	clientset, _ := kubernetes.NewForConfig(cfg)
 
-		// Sample subscription to endpoints:
-		// https://github.com/mailgun/gubernator/blob/1e6849ab820232acfd31440a33580496fb3d3f45/kubernetes.go
+	selector, _ := fields.ParseSelector("metadata.name=sample")
 
-		// With k8s rbac to hit the control plane:
-		// https://github.com/mailgun/gubernator/blob/1e6849ab820232acfd31440a33580496fb3d3f45/deploy/helm/templates/rbac.yaml
-		for {
-			// For now, just query the headless dns record over and over again
-			time.Sleep(500 * time.Millisecond)
+	watchlist := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "endpoints", "default", selector)
+	_, controller := cache.NewInformer(
+		watchlist,
+		&v1.Endpoints{},
+		time.Second*0,
+		cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				pool.Set(getPeerIPs("sample-headless")...)
+			},
+			DeleteFunc: func(obj interface{}) {
+				pool.Set(getPeerIPs("sample-headless")...)
+			},
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				pool.Set(getPeerIPs("sample-headless")...)
+			},
+		},
+	)
 
-			addr, _ := net.LookupIP("sample-headless")
-			peers := make([]string, len(addr))
-			for _, a := range addr {
-				peers = append(peers, fmt.Sprintf("http://%s:8000", a.String()))
-			}
-
-			pool.Set(peers...)
-		}
-	}()
+	go controller.Run(nil)
 
 	// 1024 * 1024 bytes
 	group := groupcache.NewGroup("sample", 1024*1024, groupcache.GetterFunc(
