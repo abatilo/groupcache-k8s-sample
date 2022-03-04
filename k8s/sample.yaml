@@ -33,8 +33,20 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sample
+  name: sample-headless
 spec:
   selector:
     app: sample
   clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample
+spec:
+  selector:
+    app: sample
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

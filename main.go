@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// NewHTTPPool registers /_groupcache/ with http.DefaultServeMux.
-	pool := groupcache.NewHTTPPool(fmt.Sprintf("http://%s:80", os.Getenv("MY_POD_IP")))
+	pool := groupcache.NewHTTPPool(fmt.Sprintf("http://%s:8000", os.Getenv("MY_POD_IP")))
 
 	go func() {
 		// Infinite loop every few seconds. In reality, should use k8s watch API
@@ -28,18 +28,18 @@ func main() {
 			// For now, just query the headless dns record over and over again
 			time.Sleep(500 * time.Millisecond)
 
-			addr, _ := net.LookupIP("sample")
+			addr, _ := net.LookupIP("sample-headless")
 			peers := make([]string, len(addr))
 			for _, a := range addr {
-				peers = append(peers, fmt.Sprintf("http://%s:80", a.String()))
+				peers = append(peers, fmt.Sprintf("http://%s:8000", a.String()))
 			}
 
 			pool.Set(peers...)
 		}
 	}()
 
-	// 1024 bytes
-	group := groupcache.NewGroup("sample", 1024, groupcache.GetterFunc(
+	// 1024 * 1024 bytes
+	group := groupcache.NewGroup("sample", 1024*1024, groupcache.GetterFunc(
 		func(ctx groupcache.Context, key string, dest groupcache.Sink) error {
 			oneMinuteFromNow := time.Now().Add(time.Minute)
 			dest.SetBytes([]byte(fmt.Sprintf("The key \"%s\" was retrieved from peer \"%s\"", key, os.Getenv("MY_POD_IP"))), oneMinuteFromNow)
@@ -57,5 +57,5 @@ func main() {
 
 	// Start a HTTP server to listen for peer requests from the groupcache
 	log.Printf("Serving....\n")
-	http.ListenAndServe(fmt.Sprintf("%s:80", os.Getenv("MY_POD_IP")), nil)
+	http.ListenAndServe(":8000", nil)
 }
